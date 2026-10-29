@@ -6,6 +6,9 @@
 #   values-*.yaml        overrides supplémentaires, listés dans "extraValues"
 #                        (dont values-mdp.yaml : les mots de passe, en clair pour la démo,
 #                        et horizon/values-ingress.yaml : l'Ingress de tout OpenStack)
+#                        ATTENTION : extraObjects est une liste, et Helm ne fusionne pas
+#                        les listes entre fichiers de values (le dernier fichier gagne).
+#                        Un seul fichier par service doit donc en contenir.
 #   manifests/           uniquement pour ce qui n'a pas de chart (le pod client) :
 #                        Kustomize, ajouté comme source si "manifests: true"
 #

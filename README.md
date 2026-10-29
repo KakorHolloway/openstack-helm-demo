@@ -139,6 +139,10 @@ done
 - **Les `values-mdp.yaml` couvrent tous les comptes** que chaque chart définit, pour qu'aucun
   ne garde le mot de passe par défaut `password`. Les comptes partagés (admin Keystone,
   root MariaDB, admin RabbitMQ) ont la même valeur dans toutes les charts : c'est obligatoire.
+- **`extraObjects` : un seul fichier de values par service.** C'est une liste, et Helm ne
+  fusionne pas les listes entre fichiers : si deux fichiers d'un même service en définissent,
+  le dernier écrase l'autre sans prévenir. Ici, ils sont dans `values.yaml`, sauf pour Horizon
+  (`values-ingress.yaml`).
 - **Synchro manuelle partout** (sauf la racine) : chaque synchro passe par une relecture du diff.
   OpenStack-Helm crée beaucoup de Jobs (db-init, ks-user…), immuables : en cas de diff sur un
   Job, le supprimer avant de resynchroniser.
