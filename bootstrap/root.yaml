@@ -1,0 +1,30 @@
+# Application racine (app-of-apps) : le SEUL objet à appliquer à la main.
+#
+#   kubectl apply -f bootstrap/root.yaml
+#
+# Elle synchronise tout le contenu de clusters/demo/ : les AppProjects, une Application par
+# composant du socle (MetalLB, Rook-Ceph) et l'ApplicationSet qui génère une Application
+# par service OpenStack.
+#
+# repoURL : l'URL de CE dépôt. Si vous le forkez, remplacez-la ici ET dans clusters/demo/
+# (grep -r openstack-helm-demo.git).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  source:
+    repoURL: https://github.com/KakorHolloway/openstack-helm-demo.git
+    targetRevision: main
+    path: clusters/demo
+    directory:
+      recurse: true
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true

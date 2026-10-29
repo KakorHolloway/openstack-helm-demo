@@ -1,0 +1,12 @@
+conf:
+  horizon:
+    local_settings:
+      config:
+        secure_proxy_ssl_header: true
+        secure_proxy_addr_header: "X-Forwarded-For"
+        allowed_hosts:
+          - '*'
+          - openstack.example.com
+        csrf_trusted_origins:
+          - https://openstack.example.com
+

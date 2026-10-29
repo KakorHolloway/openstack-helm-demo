@@ -1,0 +1,152 @@
+# OpenStack-Helm : une Application ArgoCD par service, générée par cet ApplicationSet.
+#
+# Chaque service a son dossier apps/openstack/<dossier>/ :
+#   values.yaml          overrides OpenStack-Helm (images, endpoints publics…) ; les objets
+#                        en plus de la chart (alias de Service…) y sont en "extraObjects"
+#   values-*.yaml        overrides supplémentaires, listés dans "extraValues"
+#                        (dont values-mdp.yaml : les mots de passe, en clair pour la démo,
+#                        et horizon/values-ingress.yaml : l'Ingress de tout OpenStack)
+#   manifests/           uniquement pour ce qui n'a pas de chart (le pod client) :
+#                        Kustomize, ajouté comme source si "manifests: true"
+#
+# Ajouter un service = ajouter un élément ci-dessous (+ son dossier dans apps/openstack/).
+#
+# Ordre de synchro : les sync-wave ne s'appliquent pas aux Applications d'un
+# ApplicationSet. On synchronise donc par "tier", dans cet ordre :
+#   infra -> identity -> services -> compute -> apps
+#   argocd app sync -l openstack-helm-demo/tier=infra    (puis identity, etc.)
+# Les init-containers kubernetes-entrypoint d'OpenStack-Helm attendent de toute façon
+# leurs dépendances (base, file de messages, Keystone…).
+#
+# Sécurité :
+#  - Synchro MANUELLE (pas de syncPolicy.automated) : on valide le diff avant chaque synchro.
+#  - Pas de finalizer resources-finalizer : supprimer une Application ne supprime JAMAIS
+#    les objets OpenStack.
+#  - applicationsSync: create-update : retirer un élément de la liste ne supprime pas
+#    l'Application (à supprimer à la main, sans cascade).
+#  - preserveResourcesOnDeletion : supprimer l'ApplicationSet laisse tout en place.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: openstack
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - list:
+        elements:
+          # --- infra : base de données, messages, cache, réseau, hyperviseur, Ceph ---
+          - name: mariadb
+            chart: mariadb
+            chartVersion: "2026.1.4+a659ab8a2"
+            tier: infra
+            extraValues: [values-mdp.yaml]
+          - name: rabbitmq
+            chart: rabbitmq
+            chartVersion: "2026.1.2+a659ab8a2"
+            tier: infra
+            extraValues: [values-mdp.yaml]
+          - name: memcached
+            chart: memcached
+            chartVersion: "2026.1.0+a659ab8a2"
+            tier: infra
+          - name: ceph-adapter-rook
+            chart: ceph-adapter-rook
+            chartVersion: "2026.1.3+a659ab8a2"
+            tier: infra
+          - name: openvswitch
+            chart: openvswitch
+            chartVersion: "2026.1.1+a659ab8a2"
+            tier: infra
+          - name: libvirt
+            chart: libvirt
+            chartVersion: "2026.1.4+a659ab8a2"
+            tier: infra
+          # --- identity : Keystone, dont tous les autres services dépendent ---
+          - name: keystone
+            chart: keystone
+            chartVersion: "2026.1.10+a659ab8a2"
+            tier: identity
+            extraValues: [values-mdp.yaml]
+          # --- services : images, volumes, placement, réseau ---
+          - name: glance
+            chart: glance
+            chartVersion: "2026.1.11+a659ab8a2"
+            tier: services
+            extraValues: [values-pvc-storage.yaml, values-mdp.yaml]
+          - name: cinder
+            chart: cinder
+            chartVersion: "2026.1.14+a659ab8a2"
+            tier: services
+            extraValues: [values-mdp.yaml]
+          - name: placement
+            chart: placement
+            chartVersion: "2026.1.7+a659ab8a2"
+            tier: services
+            extraValues: [values-mdp.yaml]
+          - name: neutron
+            chart: neutron
+            chartVersion: "2026.1.15+a659ab8a2"
+            tier: services
+            extraValues: [values-simple.yaml, values-mdp.yaml]
+          # --- compute : Nova ---
+          - name: nova
+            chart: nova
+            chartVersion: "2026.1.13+a659ab8a2"
+            tier: compute
+            extraValues: [values-mdp.yaml]
+          # --- apps : orchestration, dashboard (+ Ingress de tout OpenStack), client CLI ---
+          - name: heat
+            chart: heat
+            chartVersion: "2026.1.8+a659ab8a2"
+            tier: apps
+            extraValues: [values-mdp.yaml]
+          - name: horizon
+            chart: horizon
+            chartVersion: "2026.1.8+a659ab8a2"
+            tier: apps
+            extraValues: [values-custom.yaml, values-ingress.yaml, values-mdp.yaml]
+          - name: openstack-client
+            dir: client
+            tier: apps
+            manifests: true
+  syncPolicy:
+    applicationsSync: create-update
+    preserveResourcesOnDeletion: true
+  template:
+    metadata:
+      name: '{{ .name }}'
+      labels:
+        app.kubernetes.io/part-of: openstack
+        openstack-helm-demo/tier: '{{ .tier }}'
+    spec:
+      project: openstack
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: openstack
+  templatePatch: |
+    spec:
+      sources:
+      {{- if .chart }}
+        # 1. la chart OpenStack-Helm, avec nos values
+        - repoURL: https://tarballs.opendev.org/openstack/openstack-helm
+          chart: {{ .chart }}
+          targetRevision: {{ .chartVersion | quote }}
+          helm:
+            releaseName: {{ .name }}
+            valueFiles:
+              - $values/apps/openstack/{{ .dir | default .name }}/values.yaml
+            {{- range .extraValues }}
+              - $values/apps/openstack/{{ $.dir | default $.name }}/{{ . }}
+            {{- end }}
+        # 2. ce dépôt, référencé comme "$values"
+        - repoURL: https://github.com/KakorHolloway/openstack-helm-demo.git
+          targetRevision: main
+          ref: values
+      {{- end }}
+      {{- if .manifests }}
+        # 3. nos manifests Kustomize (pod client)
+        - repoURL: https://github.com/KakorHolloway/openstack-helm-demo.git
+          targetRevision: main
+          path: apps/openstack/{{ .dir | default .name }}/manifests
+      {{- end }}

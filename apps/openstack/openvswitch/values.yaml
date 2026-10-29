@@ -1,0 +1,3 @@
+# Values OpenStack-Helm pour openvswitch : valeurs par défaut de la chart (aucun override).
+# Fichier présent pour garder la même structure que les autres services.
+{}

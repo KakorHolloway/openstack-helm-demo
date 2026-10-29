@@ -1,0 +1,9 @@
+# Tout Ceph sur controlplane-01 (seul nœud avec un disque OSD)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rook-ceph-operator-config
+  namespace: rook-ceph
+data:
+  CSI_PROVISIONER_NODE_AFFINITY: "kubernetes.io/hostname=controlplane-01"
+  CSI_PLUGIN_NODE_AFFINITY: "kubernetes.io/hostname=controlplane-01"

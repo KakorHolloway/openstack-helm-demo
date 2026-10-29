@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rook-ceph-operator
+  namespace: rook-ceph
+spec:
+  template:
+    spec:
+      containers:
+        - name: rook-ceph-operator
+          env:
+            - name: AGENT_NODE_AFFINITY
+              value: "kubernetes.io/hostname=controlplane-01"
+            - name: DISCOVER_AGENT_NODE_AFFINITY
+              value: "kubernetes.io/hostname=controlplane-01"

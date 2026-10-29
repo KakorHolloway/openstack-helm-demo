@@ -1,0 +1,14 @@
+# Reproduit l'installation actuelle : manifests Rook du commit e2779459c
+# (branche master, juillet 2026) + modifications locales d'operator.yaml.
+# Recommandation : migrer vers le chart Helm rook-ceph en version stable
+# (https://charts.rook.io/release) — l'image actuelle est rook/ceph:master.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - https://raw.githubusercontent.com/rook/rook/e2779459cf8f545d5acc826aab206234edbd3a92/deploy/examples/crds.yaml
+  - https://raw.githubusercontent.com/rook/rook/e2779459cf8f545d5acc826aab206234edbd3a92/deploy/examples/common.yaml
+  - https://raw.githubusercontent.com/rook/rook/e2779459cf8f545d5acc826aab206234edbd3a92/deploy/examples/csi-operator.yaml
+  - https://raw.githubusercontent.com/rook/rook/e2779459cf8f545d5acc826aab206234edbd3a92/deploy/examples/operator.yaml
+patches:
+  - path: patch-operator-config.yaml
+  - path: patch-operator-deployment.yaml

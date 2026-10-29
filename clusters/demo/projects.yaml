@@ -1,0 +1,111 @@
+# Projets ArgoCD (un par domaine) + namespace OpenStack.
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  description: "Socle réseau : MetalLB"
+  sourceRepos:
+    - '*'
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: '*'
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: storage
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  description: "Stockage : Rook-Ceph (opérateur + cluster)"
+  sourceRepos:
+    - '*'
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: '*'
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+---
+# Namespace OpenStack, déclaré ici plutôt que par CreateNamespace : le projet "openstack"
+# n'a pas le droit de créer des Namespaces. Delete=false : jamais supprimé par ArgoCD.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openstack
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+    argocd.argoproj.io/sync-options: Delete=false
+---
+# OpenStack-Helm : UN projet pour tous les services (Applications générées par
+# clusters/demo/openstack/appset.yaml), restreint à ce dont OpenStack-Helm a besoin :
+#  - sources : le dépôt de charts OpenStack-Helm et ce dépôt, rien d'autre ;
+#  - destinations : namespace openstack (+ rook-ceph pour ceph-adapter-rook, qui y pose
+#    un Role/RoleBinding de lecture des secrets Rook) ;
+#  - ressources cluster : uniquement ClusterRole/ClusterRoleBinding (job cell-setup de nova,
+#    lecture des nodes) ; pas de Namespace, CRD, StorageClass, webhook, PV ;
+#  - ressources namespacées : liste fermée. Un nouveau type = l'ajouter ici explicitement.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: openstack
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  description: "OpenStack-Helm : socle (MariaDB, RabbitMQ, Memcached, OVS, libvirt, Ceph), Keystone, Glance, Cinder, Placement, Neutron, Nova, Heat, Horizon, client"
+  sourceRepos:
+    - https://tarballs.opendev.org/openstack/openstack-helm
+    - https://github.com/KakorHolloway/openstack-helm-demo.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: openstack
+    - server: https://kubernetes.default.svc
+      namespace: rook-ceph
+  clusterResourceWhitelist:
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Secret
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ServiceAccount
+    - group: ""
+      kind: PersistentVolumeClaim
+    - group: ""
+      kind: Pod
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: DaemonSet
+    - group: apps
+      kind: StatefulSet
+    - group: batch
+      kind: Job
+    - group: batch
+      kind: CronJob
+    - group: policy
+      kind: PodDisruptionBudget
+    - group: rbac.authorization.k8s.io
+      kind: Role
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding
+    - group: networking.k8s.io
+      kind: Ingress
+    - group: networking.k8s.io
+      kind: NetworkPolicy
