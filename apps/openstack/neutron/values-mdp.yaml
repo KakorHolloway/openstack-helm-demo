@@ -1,0 +1,52 @@
+# ---------------------------------------------------------------------------
+#  Mots de passe de neutron — DÉMO UNIQUEMENT, en clair et volontairement bidon.
+#  En production : un gestionnaire de secrets (OpenBao/Vault + External Secrets,
+#  SOPS…), jamais de mot de passe en clair dans git.
+#
+#  Fichier généré à partir des values de la chart OpenStack-Helm (@a659ab8a2) :
+#  il reprend TOUS les comptes qu'elle définit, pour qu'aucun ne garde le mot de
+#  passe par défaut « password ». Les comptes partagés (admin Keystone, root
+#  MariaDB, admin RabbitMQ…) doivent avoir la même valeur dans toutes les charts.
+#
+#  Pas de caractères spéciaux (!, @, %, :, /…) : Helm les encode dans les URL
+#  de connexion (! -> %21) et certains scripts des charts ne les décodent pas.
+# ---------------------------------------------------------------------------
+endpoints:
+  oslo_db:
+    auth:
+      admin:
+        password: B4teau123
+      neutron:
+        password: B4teau123
+  oslo_messaging:
+    auth:
+      admin:
+        password: B4teau123
+      neutron:
+        password: B4teau123
+  identity:
+    auth:
+      admin:
+        password: B4teau123
+      neutron:
+        password: B4teau123
+      nova:
+        password: B4teau123
+      placement:
+        password: B4teau123
+      designate:
+        password: B4teau123
+      ironic:
+        password: B4teau123
+      test:
+        password: B4teau123
+conf:
+  metadata_agent:
+    DEFAULT:
+      metadata_proxy_shared_secret: B4teau123
+  ovn_agent:
+    DEFAULT:
+      metadata_proxy_shared_secret: B4teau123
+  ovn_metadata_agent:
+    DEFAULT:
+      metadata_proxy_shared_secret: B4teau123

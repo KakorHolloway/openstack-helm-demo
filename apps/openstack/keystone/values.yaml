@@ -1,0 +1,146 @@
+---
+images:
+  tags:
+    bootstrap: "quay.io/airshipit/openstack-client:2026.1-ubuntu_noble"
+    db_init: "quay.io/airshipit/openstack-client:2026.1-ubuntu_noble"
+    db_drop: "quay.io/airshipit/openstack-client:2026.1-ubuntu_noble"
+    keystone_api: "quay.io/airshipit/keystone:2026.1-ubuntu_noble"
+    keystone_bootstrap: "quay.io/airshipit/openstack-client:2026.1-ubuntu_noble"
+    keystone_credential_rotate: "quay.io/airshipit/keystone:2026.1-ubuntu_noble"
+    keystone_credential_setup: "quay.io/airshipit/keystone:2026.1-ubuntu_noble"
+    keystone_db_sync: "quay.io/airshipit/keystone:2026.1-ubuntu_noble"
+    keystone_domain_manage: "quay.io/airshipit/keystone:2026.1-ubuntu_noble"
+    keystone_fernet_rotate: "quay.io/airshipit/keystone:2026.1-ubuntu_noble"
+    keystone_fernet_setup: "quay.io/airshipit/keystone:2026.1-ubuntu_noble"
+    ks_user: "quay.io/airshipit/openstack-client:2026.1-ubuntu_noble"
+endpoints:
+  identity:
+    host_fqdn_override:
+      default: keystone.openstack.example.com
+      internal: keystone-api.openstack.svc.cluster.local
+    scheme:
+      default: https
+      internal: http
+    port:
+      api:
+        default: 443
+        internal: 5000
+  image:
+    host_fqdn_override:
+      default: glance.openstack.example.com
+      internal: glance-api.openstack.svc.cluster.local
+    scheme:
+      default: https
+      internal: http
+    port:
+      api:
+        default: 9292
+        public: 443
+
+  compute:
+    host_fqdn_override:
+      default: nova-api.openstack.svc.cluster.local
+      public: nova.openstack.example.com
+    scheme:
+      default: http
+      public: https
+    port:
+      api:
+        default: 8774
+        public: 443
+
+  compute_metadata:
+    host_fqdn_override:
+      default: nova-metadata.openstack.svc.cluster.local
+      public: nova-metadata.openstack.example.com
+    scheme:
+      default: http
+      public: https
+    port:
+      api:
+        default: 8775
+        public: 443
+
+  network:
+    host_fqdn_override:
+      default: neutron-server.openstack.svc.cluster.local
+      public: neutron.openstack.example.com
+    scheme:
+      default: http
+      public: https
+    port:
+      api:
+        default: 9696
+        public: 443
+
+  volume:
+    host_fqdn_override:
+      default: cinder-api.openstack.svc.cluster.local
+      public: cinder.openstack.example.com
+    scheme:
+      default: http
+      public: https
+    port:
+      api:
+        default: 8776
+        public: 443
+
+  placement:
+    host_fqdn_override:
+      default: placement-api.openstack.svc.cluster.local
+      public: placement.openstack.example.com
+    scheme:
+      default: http
+      public: https
+    port:
+      api:
+        default: 8778
+        public: 443
+
+  orchestration:
+    host_fqdn_override:
+      default: heat-api.openstack.svc.cluster.local
+      public: heat.openstack.example.com
+    scheme:
+      default: http
+      public: https
+    port:
+      api:
+        default: 8004
+        public: 443
+
+  cloudformation:
+    host_fqdn_override:
+      default: heat-cfn.openstack.svc.cluster.local
+      public: heat-cfn.openstack.example.com
+    scheme:
+      default: http
+      public: https
+    port:
+      api:
+        default: 8000
+        public: 443
+
+# --- Objets supplémentaires, rendus par la chart avec le reste du service ---
+# Alias de Service « keystone » : l'API sur le port 80.
+extraObjects:
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: keystone
+      namespace: openstack
+    spec:
+      ports:
+      - name: ks-pub
+        port: 80
+        protocol: TCP
+        targetPort: 5000
+      selector:
+        app.kubernetes.io/component: api
+        app.kubernetes.io/instance: keystone
+        app.kubernetes.io/name: keystone
+        application: keystone
+        component: api
+        release_group: keystone
+      sessionAffinity: None
+      type: ClusterIP

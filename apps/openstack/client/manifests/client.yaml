@@ -1,0 +1,36 @@
+# Définition du stockage pour les fichiers de configuration OpenStack
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: openstack-config-pvc
+  labels:
+    app: openstack-client
+spec:
+  storageClassName: "general"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+# Définition du Pod pour exécuter le client OpenStack
+apiVersion: v1
+kind: Pod
+metadata:
+  name: openstack-client
+  labels:
+    app: openstack-client
+spec:
+  containers:
+    - name: openstack-client
+      image: quay.io/airshipit/openstack-client:2026.1-ubuntu_noble # Remplacez par une image contenant déjà le client openstack si disponible
+      command: ["/bin/bash", "-c", "sleep infinity"]
+      ports:
+        - containerPort: 80
+      volumeMounts:
+        - name: config-volume
+          mountPath: /data # Chemin standard pour les fichiers de configuration
+  volumes:
+    - name: config-volume
+      persistentVolumeClaim:
+        claimName: openstack-config-pvc

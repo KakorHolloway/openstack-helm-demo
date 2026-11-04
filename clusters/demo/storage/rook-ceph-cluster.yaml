@@ -1,0 +1,21 @@
+# CephCluster mono-nœud (OSD /dev/nvme0n1p3 sur controlplane-01), pool replicapool
+# (size 1) et StorageClass `general` (RBD).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rook-ceph-cluster
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  project: storage
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: rook-ceph
+  source:
+    repoURL: https://github.com/KakorHolloway/openstack-helm-demo.git
+    targetRevision: main
+    path: apps/storage/rook-ceph-cluster
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

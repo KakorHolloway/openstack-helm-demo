@@ -1,0 +1,155 @@
+# Exposition d'OpenStack : un Ingress unique pour Horizon et toutes les API publiques,
+# plus un Ingress pour la console noVNC. Rendus par la chart horizon (extraObjects).
+# Pas de bloc tls : dans la démo, un reverse proxy en amont termine le TLS (voir README).
+extraObjects:
+  - apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: openstack
+      namespace: openstack
+      annotations:
+        nginx.ingress.kubernetes.io/proxy-body-size: "0"
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+        nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    spec:
+      ingressClassName: nginx
+
+      rules:
+
+        # Horizon Dashboard
+        - host: openstack.example.com
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: horizon-int
+                    port:
+                      number: 80
+
+        # Keystone Identity API
+        - host: keystone.openstack.example.com
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: keystone-api
+                    port:
+                      number: 5000
+
+        # Glance Image API
+        - host: glance.openstack.example.com
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: glance-api
+                    port:
+                      number: 9292
+
+        # Nova Compute API
+        - host: nova.openstack.example.com
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: nova-api
+                    port:
+                      number: 8774
+
+        # Nova Metadata API
+        - host: nova-metadata.openstack.example.com
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: nova-metadata
+                    port:
+                      number: 8775
+
+        # Neutron Network API
+        - host: neutron.openstack.example.com
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: neutron-server
+                    port:
+                      number: 9696
+
+        # Cinder Block Storage API
+        - host: cinder.openstack.example.com
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: cinder-api
+                    port:
+                      number: 8776
+
+        # Placement API
+        - host: placement.openstack.example.com
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: placement-api
+                    port:
+                      number: 8778
+
+        # Heat API
+        - host: heat.openstack.example.com
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: heat-api
+                    port:
+                      number: 8004
+
+        # Heat CloudFormation API
+        - host: heat-cfn.openstack.example.com
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: heat-cfn
+                    port:
+                      number: 8000
+  - apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: vnc
+      namespace: openstack
+    spec:
+      ingressClassName: nginx
+      rules:
+      - host: vncopenstack.example.com
+        http:
+          paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nova-novncproxy
+                port:
+                  number: 6080

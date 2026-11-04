@@ -1,0 +1,38 @@
+# ---------------------------------------------------------------------------
+#  Mots de passe de glance — DÉMO UNIQUEMENT, en clair et volontairement bidon.
+#  En production : un gestionnaire de secrets (OpenBao/Vault + External Secrets,
+#  SOPS…), jamais de mot de passe en clair dans git.
+#
+#  Fichier généré à partir des values de la chart OpenStack-Helm (@a659ab8a2) :
+#  il reprend TOUS les comptes qu'elle définit, pour qu'aucun ne garde le mot de
+#  passe par défaut « password ». Les comptes partagés (admin Keystone, root
+#  MariaDB, admin RabbitMQ…) doivent avoir la même valeur dans toutes les charts.
+#
+#  Pas de caractères spéciaux (!, @, %, :, /…) : Helm les encode dans les URL
+#  de connexion (! -> %21) et certains scripts des charts ne les décodent pas.
+# ---------------------------------------------------------------------------
+endpoints:
+  identity:
+    auth:
+      admin:
+        password: B4teau123
+      glance:
+        password: B4teau123
+      test:
+        password: B4teau123
+  oslo_db:
+    auth:
+      admin:
+        password: B4teau123
+      glance:
+        password: B4teau123
+  oslo_messaging:
+    auth:
+      admin:
+        password: B4teau123
+      glance:
+        password: B4teau123
+  ceph_object_store:
+    auth:
+      glance:
+        password: B4teau123

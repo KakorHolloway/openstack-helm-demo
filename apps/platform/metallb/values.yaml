@@ -1,0 +1,3 @@
+# Values de la chart MetalLB : valeurs par défaut, rien à surcharger.
+# Le pool d'IP et l'annonce L2 sont dans apps/platform/metallb-config/.
+{}

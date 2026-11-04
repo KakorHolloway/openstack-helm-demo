@@ -1,0 +1,30 @@
+# metallb-config.yaml
+# This file defines the IP pool and advertisement method for MetalLB
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  # A descriptive name for this pool
+  name: public
+  # Must match the namespace where MetalLB is installed
+  namespace: metallb-system
+spec:
+  addresses:
+    # CIDR range of IPs available for LoadBalancer services
+    # Replace with your actual free IP range on the local network
+    - 192.168.1.200-192.168.1.250
+    # You can add additional ranges or single IPs as needed
+    # - 10.0.0.100/32
+
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  # Name for the advertisement resource
+  name: public
+  namespace: metallb-system
+spec:
+  # Bind this advertisement to specific IP pools
+  # If omitted, it advertises all pools (not recommended in multi-pool setups)
+  ipAddressPools:
+    - public
